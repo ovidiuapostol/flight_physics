@@ -1,0 +1,26 @@
+# Ada build artifacts
+*.o
+*.ali
+*.dll
+*.exe
+
+# GNAT project build dirs
+obj/
+lib/
+
+# Alire
+.alire/
+.cache/
+
+# GNAT Studio
+.gnat/
+.gprconfig/
+
+# VS Code
+.vscode/
+
+# Editor temporary files
+.#*
+
+# Backup files
+*~

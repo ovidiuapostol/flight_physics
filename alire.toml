@@ -1,0 +1,11 @@
+name = "flight_physics"
+description = ""
+version = "0.1.0-dev"
+
+authors = ["Your Name"]
+maintainers = ["Your Name <example@example.com>"]
+licenses = "MIT"
+website = ""
+tags = []
+
+executables = ["flight_physics"]
