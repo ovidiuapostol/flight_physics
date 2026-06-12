@@ -85,7 +85,7 @@ package body Display is
             --  Aircraft marker (RED)
             if Row = Marker_Row then
                Line := Line &
-                 Character'Val (27) & "[31m" &  -- red
+                 Character'Val (27) & "[96m" &  -- red
                  "  <*>" &
                  Character'Val (27) & "[0m";    -- reset
             end if;

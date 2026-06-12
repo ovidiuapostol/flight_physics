@@ -78,7 +78,7 @@ package body Physics is
          --  Update environment (optional coupling)
          Environment.Env.Set_Speed (S_Local.Velocity);
          --  Stop condition (simulation time limit)
-         if Run_Time >= 1000 then
+         if Run_Time >= 700 then
             Stop_Flag := True;
          end if;
 
