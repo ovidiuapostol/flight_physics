@@ -35,19 +35,23 @@ package body Logger is
       --  Read current aircraft state
       S_Local : constant Physics.Aircraft_State := Physics.Aircraft.Get_State;
    begin
-      Ada.Text_IO.Put_Line (File, Float'Image (S_Local.Position) & ","
-      & Float'Image (S_Local.Velocity) & "," & Float'Image (S_Local.Throttle));
+      Ada.Text_IO.Put_Line
+        (File, Float'Image (S_Local.Position) & ","
+         & Float'Image (S_Local.Velocity) & "," & Float'Image (S_Local.Throttle) & ","
+         & Float'Image (S_Local.Pitch_Angle) & "," & Float'Image (S_Local.Pitch_Rate) & ","
+         & Float'Image (S_Local.Desired_Pitch) & "," & Float'Image (S_Local.Elevator)
+        );
    end Log_Data;
 
 begin
-   ------------------------------------------------------------
+   ----------------------------------------------------------
    --  PACKAGE INITIALIZATION (runs BEFORE scheduler starts)
    ------------------------------------------------------------
    --  Open log file
    Ada.Text_IO.Create (File, Ada.Text_IO.Out_File, "log.csv");
 
    --  Write CSV header
-   Ada.Text_IO.Put_Line (File, "Position,Velocity,Throttle");
+   Ada.Text_IO.Put_Line (File, "Position,Velocity,Throttle, Pitch_Angle,Pitch_Rate,Desired_Pitch,Elevator");
 
 exception
    ---------------------------------------------------------

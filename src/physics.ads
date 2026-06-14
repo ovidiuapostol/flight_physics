@@ -12,9 +12,16 @@ package Physics is
    --   Represents the current state of the aircraft
    ---------------------------------------------------------
    type Aircraft_State is record
-      Position : Float := 0.0;
-      Velocity : Float := 0.0;
-      Throttle : Float := 0.0;
+      Position    : Float := 0.0;           --  altitude [m]
+      Velocity    : Float := 0.0;           --  vertical speed [m/s]
+      Throttle    : Float := 0.0;           --  engine control [0..1]
+
+      Pitch_Angle : Float := 0.0;        --  deg
+      Pitch_Rate  : Float := 0.0;        --  deg/s
+      Elevator    : Float := 0.0;        --  command [-1 .. 1]
+
+      --  kept in AIrcraft_State for display and tunning effectivness only
+      Desired_Pitch : Float := 0.0;       --  command from outer loop
    end record;
    ---------------------------------------------------------
    --  Simulation timing
@@ -35,7 +42,8 @@ package Physics is
       function Get_State   return Aircraft_State;
       --  Signal simulation termination
       function Should_Stop return Boolean;
-
+      --  Run Time is needed by display, to update the running time
+      function Get_Run_Time return Integer;
       --  Integrator step (updates position & velocity)
       procedure Integrator;
    private

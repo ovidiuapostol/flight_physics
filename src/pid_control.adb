@@ -1,66 +1,137 @@
 ------------------------------------------------------------
 --  pid_control.adb
+--
 --  Package: PID_Control
---  Purpose: Implements a PID control step for the vertical
---           flight system. Computes throttle based on
---           position error, velocity (damping), and
---           integral action.
+--
+--  Purpose:
+--     Implements a multi-loop control system for vertical
+--     flight control of the aircraft.
+--
+--     The controller is composed of three coordinated
+--     feedback loops:
+--
+--       1. Altitude Control (Outer Loop)
+--          - Computes altitude error
+--          - Generates a desired pitch command
+--
+--       2. Pitch Control (Inner Loop)
+--          - Uses PD control to track desired pitch
+--          - Produces elevator command
+--
+--       3. Energy / Throttle Control
+--          - Uses PI control based on altitude error
+--            and accumulated error (integrator)
+--          - Includes velocity feedback for damping
+--          - Adjusts throttle to regulate total energy
+--
+--     Features:
+--       - Anti-windup mechanism for integrator
+--       - Command saturation via clamping
+--       - Coupled pitch + energy control
+--
 --  Author : Ovi
 ------------------------------------------------------------
 with Physics;
+with Utils;
 package body PID_Control is
+   --------------------------------------------------------------
+   --  Altitude controller gains ---
+   --  Altitude control loops:
+   --    Target Altitude
+   --          |
+   --    Altitude Controller     ---> outer loop
+   --          |
+   --      desired pitch         ---> output from the outer loop/input in Pitch controller
+   --          |
+   --    Pitch controller        ----> inner loop
+   --          |
+   --       elevator            ---> command that goes to physics
+   ----------------------------------------------------------------------------
 
-   --  PID gains (tuned empirically)
-   Kp : constant Float := 0.00216;  --  proportional gain
-   Ki : constant Float := 0.000075; --  integral gain
-   Kd : constant Float := 0.0065;   --  derivative gain (velocity damping)
+   --  Throttle control gains (energy control loop)
+   Kp_Throttle : constant Float := 0.00002;   -- proportional (altitude error) in curent code 0.00003
+   Ki_Throttle : constant Float := 0.000002;  -- integral (accumulated error)
+   Kd_Throttle : constant Float := 0.003;     -- velocity damping (energy rate)
+
+   Throttle_Trim : constant Float := 0.512;   -- equilibrium throttle
+   Kp_Alt   : constant Float := 0.012; --  proportional gain for outer loop [deg/m]
+
+   Kp_Pitch : constant Float := 0.08;  -- proportional gain for the inner loop --old value 0.08
+   Kd_Pitch : constant Float := 0.05;  -- derivative gain for the inner loop   -- old = 0.05
+
    --  Integral term (acumulated error)
-   Integral   : Float := 0.0;
-   Target : constant Float := 1000.0; --  target altitude [m]
+   Integral   : Float := 0.0;          --  used by Throttle
+   Target : constant Float := 1000.0;  --  target altitude [m]
 
-   ---------------------------------------------------------
-   --  PID_Step
-   --   Performs one control iteration:
-   --   - Computes position error
-   --   - Applies PID control law
-   --   - Handles saturation and anti-windup
-   --   - Updates aircraft throttle
-   ---------------------------------------------------------
+---------------------------------------------------------
+--  PID_Step
+--
+--  Performs one control iteration for the longitudinal
+--  flight controller using a multi-loop structure:
+--
+--    1. Outer loop (Altitude -> Pitch):
+--       - Computes altitude error
+--       - Generates desired pitch command
+--
+--    2. Inner loop (Pitch -> Elevator):
+--       - Uses PD control to track desired pitch
+--       - Produces elevator command
+--
+--    3. Energy control (Altitude -> Throttle):
+--       - Uses PI control to regulate total energy
+--       - Adjusts throttle to remove steady-state error
+--       - Includes velocity feedback to limit overshoot
+--
+--  Features:
+--    - Anti-windup for integrator
+--    - Command saturation (elevator, pitch, throttle)
+--    - Coupled pitch + energy control for stable climb
+--
+--  This implementation approximates a simplified
+--  autopilot-like control system.
+---------------------------------------------------------
    procedure PID_Step is
-      S_Local        : Physics.Aircraft_State;
-      Error          : Float;
-      Throttle       : Float;
-      Unsat_Throttle : Float;
+      S_Local         : Physics.Aircraft_State;
+      Throttle        : Float;   --  command: increase/decrease engine output
+      Alt_Error       : Float;   --  altitude error
+      Pitch_Error     : Float;   --  difference between desired Pitch and real pitch
+      Desired_Pitch   : Float;   --  computed by the outer control loop
+      Elevator        : Float;   --  command: increase/decr5ease pitch
    begin
       --  Read current State (feedback)
       S_Local := Physics.Aircraft.Get_State;
-      --  Compute controll Error
-      Error := Target - S_Local.Position;
-      --  Compute unsaturated Throttle
-      Unsat_Throttle := Kp * Error + Ki * Integral - Kd * S_Local.Velocity;
-      --  PI
-      --  Anti-windup (add integrall only if not saturated)
-      if not (((Unsat_Throttle > 1.0) and (Error > 0.0)) or
-                ((Unsat_Throttle < 0.0) and (Error < 0.0))) then
-         Integral := Integral + Error * Physics.DT;
+      --------------------------------------------------
+      --  Outer loop - Altitude error -> desired pitch
+      --------------------------------------------------
+      Alt_Error := Target - S_Local.Position;
+
+      --------- Anti Wind-up --------------
+      if abs (Alt_Error) < 300.0 then
+         Integral := Integral + Alt_Error * Physics.DT;
       end if;
-      --  Clamp integral term
-      if Integral >= 5000.0 then
-         Integral := 5000.0;
-      elsif Integral <= -5000.0 then
-         Integral := -5000.0;
-      end if;
-      --  Derivative: Velocity is allready the derivative of possition
-      Throttle := Kp * Error + Ki * Integral - Kd * S_Local.Velocity;
-      ------------------------------------------------------
-      --  Actuator saturation (throttle limits)
-      ------------------------------------------------------
-      if Throttle > 1.0 then
-         Throttle := 1.0;
-      elsif Throttle < 0.0 then
-         Throttle := 0.0;
-      end if;
+
+      --  clamp it
+      Integral := Utils.Clamp (Integral, -10000.0, 10000.0);
+
+      Desired_Pitch := Kp_Alt * Alt_Error;
+      --      clamp desired pitch
+      Desired_Pitch := Utils.Clamp (Desired_Pitch, -10.0, 10.0);
+
+      --------------------------------------------------
+      --  Inner loop - Pitch error -> Elevator
+      --------------------------------------------------
+      Pitch_Error := Desired_Pitch - S_Local.Pitch_Angle;
+
+      Elevator := Kp_Pitch * Pitch_Error - Kd_Pitch * S_Local.Pitch_Rate;
+      --  clamp elevator
+      Elevator := Utils.Clamp (Elevator, -1.0, 1.0);
+
+      Throttle := Throttle_Trim + Kp_Throttle * Alt_Error + Ki_Throttle * Integral - Kd_Throttle * S_Local.Velocity;
+      Throttle := Utils.Clamp (Throttle, 0.0, 1.0);
+
       --  Apply control
+      S_Local.Desired_Pitch := Desired_Pitch;
+      S_Local.Elevator := Elevator;
       S_Local.Throttle := Throttle;
       Physics.Aircraft.Set_State (S_Local);
 
