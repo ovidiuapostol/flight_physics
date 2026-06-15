@@ -50,8 +50,8 @@ package body PID_Control is
 
    --  Throttle control gains (energy control loop)
    Kp_Throttle : constant Float := 0.00002;   -- proportional (altitude error) in curent code 0.00003
-   Ki_Throttle : constant Float := 0.000002;  -- integral (accumulated error)
-   Kd_Throttle : constant Float := 0.003;     -- velocity damping (energy rate)
+   Ki_Throttle : constant Float := 0.0000002;  -- integral (accumulated error)
+   Kd_Throttle : constant Float := 0.006;--0.003;     -- velocity damping (energy rate)
 
    Throttle_Trim : constant Float := 0.512;   -- equilibrium throttle
    Kp_Alt   : constant Float := 0.012; --  proportional gain for outer loop [deg/m]
@@ -111,7 +111,7 @@ package body PID_Control is
       end if;
 
       --  clamp it
-      Integral := Utils.Clamp (Integral, -10000.0, 10000.0);
+      Integral := Utils.Clamp (Integral, -1000.0, 1000.0);
 
       Desired_Pitch := Kp_Alt * Alt_Error;
       --      clamp desired pitch
