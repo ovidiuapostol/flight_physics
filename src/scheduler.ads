@@ -10,6 +10,7 @@
 --             * ASCII visualization
 --  Author : Ovi
 ------------------------------------------------------------
+--  NOT USED Anymore - replaced with the Simulation_Loop
 with Ada.Real_Time;
 with Generic_Cyclic_Task;
 with Environment;

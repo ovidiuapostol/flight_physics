@@ -155,7 +155,7 @@ package body Physics is
          ---------------------------------------------------------
          -- Stop condition
          ---------------------------------------------------------
-         if Run_Time >= 3000 then
+         if Run_Time >= Simulation_Run_Time then
             Stop_Flag := True;
          end if;
 

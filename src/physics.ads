@@ -31,6 +31,9 @@ package Physics is
    --  DT is used as a Time_Step by the Integrator. The integrator need the
    --  value in second
    DT : constant Float   := Float (Time_Step) / 1000.0; --  [s]
+   --  total simulation run time
+   Simulation_Run_Time : constant Natural := 100;
+
    ---------------------------------------------------------
    --  Aircraft (Protected Object)
    --   Manages shared simulation state
