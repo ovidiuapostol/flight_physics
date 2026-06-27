@@ -10,6 +10,6 @@
 package Display is
    --  Renders the current simulation state as an ASCII frame
    --  in the terminal. Reads aircraft state internally.
-   procedure Render_Frame;
+   procedure Render_Frame (Period : Natural);
 
 end Display;

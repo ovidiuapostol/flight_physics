@@ -13,37 +13,38 @@
 with Environment;
 with Plane_Characteristics;
 with Utils;
-package body Physics is
+with Aircraft; use Aircraft;
+package body Integration is
 
-   ---------------------------------------------------------
-   --  Aircraft (Protected Body)
-   --   Encapsulates shared simulation state and updates
-   ---------------------------------------------------------
-   protected body Aircraft is
-
-      --   Update full aircraft state
-      procedure Set_State (New_State : Aircraft_State) is
-      begin
-         S := New_State;
-      end Set_State;
-
-      --   Return current aircraft state
-      function Get_State return Aircraft_State is
-      begin
-         return S;
-      end Get_State;
-
-      --   Check if simulation should terminate
-      function Should_Stop return Boolean is
-      begin
-         return Stop_Flag;
-      end Should_Stop;
-
-      --  Return the ellapsed run time
-      function Get_Run_Time return Integer is
-      begin
-         return Run_Time;
-      end Get_Run_Time;
+   --  ---------------------------------------------------------
+   --  --  Aircraft (Protected Body)
+   --  --   Encapsulates shared simulation state and updates
+   --  ---------------------------------------------------------
+   --  protected body Aircraft is
+   --
+   --     --   Update full aircraft state
+   --     procedure Set_State (New_State : Aircraft_State) is
+   --     begin
+   --        S := New_State;
+   --     end Set_State;
+   --
+   --     --   Return current aircraft state
+   --     function Get_State return Aircraft_State is
+   --     begin
+   --        return S;
+   --     end Get_State;
+   --
+   --     --   Check if simulation should terminate
+   --     function Should_Stop return Boolean is
+   --     begin
+   --        return Stop_Flag;
+   --     end Should_Stop;
+   --
+   --     --  Return the ellapsed run time
+   --     function Get_Run_Time return Integer is
+   --     begin
+   --        return Run_Time;
+   --     end Get_Run_Time;
 
 
       ------------------------------------------------------
@@ -52,7 +53,7 @@ package body Physics is
       --   - Computes forces (thrust, drag, gravity)
       --   - Updates velocity and position
       ------------------------------------------------------
-      procedure Integrator is
+      procedure Integrate (Cycle_Time : Natural) is
          S_Local   : Aircraft_State;
          Rho       : Float;                  -- air density
          G         : constant Float := 9.81; -- gravity [m/s²]
@@ -66,23 +67,23 @@ package body Physics is
          ---------------------------------------------------------
          -- Read current state
          ---------------------------------------------------------
-         S_Local  := Get_State;
+         S_Local  := Aircraft.Aircraft.Get_State;
 
          -- Get environment data
          Rho := Environment.Env.Rho;
 
          -- Update runtime
-         Run_Time := Run_Time + 1;
+--         Run_Time := Run_Time + 1;
 
          ---------------------------------------------------------
          -- Internal computation block
          ---------------------------------------------------------
          declare
             -- Aircraft parameters
-            T_Max : constant Float := Plane_Characteristics.T_Max;
-            Mass  : constant Float := Plane_Characteristics.Mass;
-            Cd    : constant Float := Plane_Characteristics.Cd;
-            Sref  : constant Float := Plane_Characteristics.Sref;
+            T_Max : constant Float := Aircraft.T_Max;
+            Mass  : constant Float := Aircraft.Mass;
+            Cd    : constant Float := Aircraft.Cd;
+            Sref  : constant Float := Aircraft.Sref;
 
             -- Forces
             Thrust : Float;
@@ -145,7 +146,7 @@ package body Physics is
          ---------------------------------------------------------
          -- Write updated state
          ---------------------------------------------------------
-         Set_State (S_Local);
+         Aircraft.Aircraft.Set_State (S_Local);
 
          ---------------------------------------------------------
          -- Update environment
@@ -155,11 +156,11 @@ package body Physics is
          ---------------------------------------------------------
          -- Stop condition
          ---------------------------------------------------------
-         if Run_Time >= Simulation_Run_Time then
-            Stop_Flag := True;
-         end if;
+--         if Run_Time >= Simulation_Run_Time then
+--            Stop_Flag := True;
+--         end if;
 
-      end Integrator;
-   end Aircraft;
+      end Integrate;
+--   end Aircraft;
 
-end Physics;
+end Integration;

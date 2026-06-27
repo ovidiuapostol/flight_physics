@@ -7,10 +7,11 @@
 --           action.
 --  Author : Ovi
 ------------------------------------------------------------
+with Aircraft;
 package PID_Control is
 
    --  Perform one PID control step
    --  Called cyclic by the scheduler
-   procedure PID_Step;
+   procedure PID_Step (S : in out Aircraft.Aircraft_State;  Period : Natural);
 
 end PID_Control;

@@ -31,7 +31,7 @@
 --
 --  Author : Ovi
 ------------------------------------------------------------
-with Physics;
+--with Physics;
 with Utils;
 package body PID_Control is
    --------------------------------------------------------------
@@ -90,16 +90,19 @@ package body PID_Control is
 --  This implementation approximates a simplified
 --  autopilot-like control system.
 ---------------------------------------------------------
-   procedure PID_Step is
-      S_Local         : Physics.Aircraft_State;
+   procedure PID_Step (S : in out Aircraft.Aircraft_State; Period : Natural) is
+      S_Local         : Aircraft.Aircraft_State;
       Throttle        : Float;   --  command: increase/decrease engine output
       Alt_Error       : Float;   --  altitude error
       Pitch_Error     : Float;   --  difference between desired Pitch and real pitch
       Desired_Pitch   : Float;   --  computed by the outer control loop
       Elevator        : Float;   --  command: increase/decr5ease pitch
+
+      DT              : Float := Float (Period) * Utils.Ms_To_Sec;
    begin
       --  Read current State (feedback)
-      S_Local := Physics.Aircraft.Get_State;
+ --     S_Local := Aircraft.Aircraft.Get_State;
+      S_Local := S;
       --------------------------------------------------
       --  Outer loop - Altitude error -> desired pitch
       --------------------------------------------------
@@ -107,7 +110,7 @@ package body PID_Control is
 
       --------- Anti Wind-up --------------
       if abs (Alt_Error) < 300.0 then
-         Integral := Integral + Alt_Error * Physics.DT;
+         Integral := Integral + Alt_Error * DT;
       end if;
 
       --  clamp it
@@ -133,7 +136,8 @@ package body PID_Control is
       S_Local.Desired_Pitch := Desired_Pitch;
       S_Local.Elevator := Elevator;
       S_Local.Throttle := Throttle;
-      Physics.Aircraft.Set_State (S_Local);
+      --  Aircraft.Aircraft.Set_State (S_Local);
+      S := S_Local;
 
    end PID_Step;
 end PID_Control;

@@ -7,7 +7,8 @@
 --  Author : Ovi
 ------------------------------------------------------------
 with Ada.Text_IO; use Ada.Text_IO;
-with Physics;
+--with Integration;
+with Aircraft;
 
 package body Logger is
 
@@ -33,7 +34,7 @@ package body Logger is
    ---------------------------------------------------------
    procedure Log_Data is
       --  Read current aircraft state
-      S_Local : constant Physics.Aircraft_State := Physics.Aircraft.Get_State;
+      S_Local : constant Aircraft.Aircraft_State := Aircraft.Aircraft.Get_State;
    begin
       Ada.Text_IO.Put_Line
         (File, Float'Image (S_Local.Position) & ","

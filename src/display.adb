@@ -11,7 +11,9 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings;               use Ada.Strings;
-with Physics;
+with Utils;
+with Aircraft;
+with Simulation_Loop;
 
 package body Display is
 
@@ -56,19 +58,19 @@ package body Display is
    ---------------------------------------------------------
    -- Time string (seconds)
    ---------------------------------------------------------
-   function Time_Str return String is
+   function Time_Str (DT : Float) return String is
    begin
       return Trim
-        (Float'Image (Float (Physics.Aircraft.Get_Run_Time) * Physics.DT), Both);
+        (Float'Image (Float (Simulation_Loop.Simulation_Cycles_Current) * DT), Both);
    end Time_Str;
 
    ---------------------------------------------------------
    -- Render frame
    ---------------------------------------------------------
-   procedure Render_Frame is
+   procedure Render_Frame (Period : Natural) is
 
-      S_Loc : constant Physics.Aircraft_State :=
-        Physics.Aircraft.Get_State;
+      S_Loc : constant Aircraft.Aircraft_State :=
+        Aircraft.Aircraft.Get_State;
 
       Screen_Height : constant Positive := 33;
       Max_Altitude  : constant Float := 1500.0;
@@ -78,6 +80,8 @@ package body Display is
       Target_Row : Integer;
 
       Buffer : Unbounded_String := To_Unbounded_String ("");
+
+      DT : constant Float := Float (Period) * Utils.Ms_To_Sec;
 
       ------------------------------------------------------
       procedure Append_Line (Text : String) is
@@ -137,7 +141,7 @@ package body Display is
             if Row = Screen_Height - 1 then
                declare
                   Left : constant String :=
-                    "t: " & Time_Str & " s";
+                    "t: " & Time_Str (DT) & " s";
 
                   Mid : constant String :=
                     "Thr: " & F (S_Loc.Throttle);

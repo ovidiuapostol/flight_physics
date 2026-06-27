@@ -12,10 +12,10 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Real_Time;
 --with Scheduler;
 with Simulation_Loop;
-with Physics;
+with Integration;
 procedure Main is
-   Task_Recurence_Integrator : constant Natural := Physics.Time_Step;
-   Sim : Simulation_Loop.Simulation_Loop (Period => Task_Recurence_Integrator);
+   Task_Cycle_Time : constant Natural := 100;  --  [ms]
+   Sim : Simulation_Loop.Simulation_Loop (Period => Task_Cycle_Time);
 begin
    ---------------------------------------------------------
    --  The Scheduler package is WITH'ed to ensure its
