@@ -43,9 +43,9 @@ package body PID_Control is
    --          |
    --      desired pitch         ---> output from the outer loop/input in Pitch controller
    --          |
-   --    Pitch controller        ----> inner loop
+   --    Pitch controller        ---> inner loop
    --          |
-   --       elevator            ---> command that goes to physics
+   --       elevator             ---> command that goes to dynamics
    ----------------------------------------------------------------------------
 
    --  Throttle control gains (energy control loop)
@@ -78,7 +78,7 @@ package body PID_Control is
 --       - Produces elevator command
 --
 --    3. Energy control (Altitude -> Throttle):
---       - Uses PI control to regulate total energy
+--       - Uses PID control to regulate total energy
 --       - Adjusts throttle to remove steady-state error
 --       - Includes velocity feedback to limit overshoot
 --
@@ -91,7 +91,6 @@ package body PID_Control is
 --  autopilot-like control system.
 ---------------------------------------------------------
    procedure PID_Step (S : in out Aircraft.Aircraft_State; Period : Natural) is
-      S_Local         : Aircraft.Aircraft_State;
       Throttle        : Float;   --  command: increase/decrease engine output
       Alt_Error       : Float;   --  altitude error
       Pitch_Error     : Float;   --  difference between desired Pitch and real pitch
@@ -100,13 +99,10 @@ package body PID_Control is
 
       DT              : Float := Float (Period) * Utils.Ms_To_Sec;
    begin
-      --  Read current State (feedback)
- --     S_Local := Aircraft.Aircraft.Get_State;
-      S_Local := S;
       --------------------------------------------------
       --  Outer loop - Altitude error -> desired pitch
       --------------------------------------------------
-      Alt_Error := Target - S_Local.Position;
+      Alt_Error := Target - S.Position;
 
       --------- Anti Wind-up --------------
       if abs (Alt_Error) < 300.0 then
@@ -123,21 +119,17 @@ package body PID_Control is
       --------------------------------------------------
       --  Inner loop - Pitch error -> Elevator
       --------------------------------------------------
-      Pitch_Error := Desired_Pitch - S_Local.Pitch_Angle;
-
-      Elevator := Kp_Pitch * Pitch_Error - Kd_Pitch * S_Local.Pitch_Rate;
+      Pitch_Error := Desired_Pitch - S.Pitch_Angle;
+      Elevator := Kp_Pitch * Pitch_Error - Kd_Pitch * S.Pitch_Rate;
       --  clamp elevator
       Elevator := Utils.Clamp (Elevator, -1.0, 1.0);
 
-      Throttle := Throttle_Trim + Kp_Throttle * Alt_Error + Ki_Throttle * Integral - Kd_Throttle * S_Local.Velocity;
+      Throttle := Throttle_Trim + Kp_Throttle * Alt_Error + Ki_Throttle * Integral - Kd_Throttle * S.Velocity;
       Throttle := Utils.Clamp (Throttle, 0.0, 1.0);
 
       --  Apply control
-      S_Local.Desired_Pitch := Desired_Pitch;
-      S_Local.Elevator := Elevator;
-      S_Local.Throttle := Throttle;
-      --  Aircraft.Aircraft.Set_State (S_Local);
-      S := S_Local;
-
+      S.Desired_Pitch := Desired_Pitch;
+      S.Elevator := Elevator;
+      S.Throttle := Throttle;
    end PID_Step;
 end PID_Control;

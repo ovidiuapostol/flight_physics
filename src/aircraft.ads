@@ -15,7 +15,6 @@ package Aircraft is
    T_Max : constant Float := Mass * 20.0;     --  maximum motor thrust [N]
    Cd    : constant Float := 0.035;           --  drag coeficient
    Sref  : constant Float := 16.0;            --  wing area [m^2]
---   Rho   : constant Float := 1.225;           --  air density at sea level
    ---------------------------------------------------------
    --  Aircraft_State
    --   Represents the current state of the aircraft
@@ -36,8 +35,6 @@ package Aircraft is
    --  Aircraft (Protected Object)
    --   Manages shared simulation state
    ---------------------------------------------------------
-   
-   
    protected Aircraft is
       --  Update full aircraft state
       procedure Set_State (New_State : Aircraft_State);
@@ -47,8 +44,6 @@ package Aircraft is
       function Should_Stop return Boolean;
       --  Run Time is needed by display, to update the running time
       function Get_Run_Time return Integer;
-      --  Integrator step (updates position & velocity)
---      procedure Integrator;
    private
       S : Aircraft_State;             -- current state
       Run_Time : Natural  := 0;       -- simulation time counter

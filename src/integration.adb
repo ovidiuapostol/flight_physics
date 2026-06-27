@@ -1,136 +1,81 @@
 ------------------------------------------------------------
---  integration.adb
+--  Integration.adb
 --  Package: Integration
---  Purpose: Integrates the accelerations respectivelly velociies
---           to get the position. This apply to both:
---            - linear
---            - angular values
+--  Purpose:
+--    Implements the numerical state-propagation step for the
+--    aircraft simulation. This procedure integrates both
+--    linear and angular accelerations over a fixed time step
+--    and updates the Aircraft_State accordingly.
+--    The integration model covers:
+--      * Angular motion: pitch rate and pitch angle
+--      * Linear vertical motion: velocity and altitude
+--    No aerodynamic or dynamic forces are computed here.
+--    Those are provided by Aerodynamics and Dynamics.
+--  Notes:
+--    - Time_Step_ms is given in milliseconds and converted
+--      to seconds using Utils.Ms_To_Sec.
+--    - Pitch angle is clamped to a safe range to prevent
+--      unrealistic simulation divergence.
+--    - The environment module is updated with the new
+--      velocity after integration.
 --  Author : Ovi
 ------------------------------------------------------------
 with Ada.Text_IO; use Ada.Text_IO;
 with Environment;
-with Plane_Characteristics;
 with Utils;
 with Aircraft; use Aircraft;
 with Dynamics;
 package body Integration is
-
-      ------------------------------------------------------
-      --  Integrator
-      --   Advances simulation by one time step DT:
-      --   - Computes forces (thrust, drag, gravity)
-      --   - Updates velocity and position
-      ------------------------------------------------------
+   ---------------------------------------------------------
+   --  Integrate
+   --  Performs one numerical integration step on the aircraft
+   --  state. The procedure:
+   --    1. Converts the time step to seconds.
+   --    2. Integrates pitch rate using angular acceleration.
+   --    3. Integrates pitch angle using the updated pitch rate.
+   --    4. Clamps pitch angle to a safe range.
+   --    5. Integrates vertical velocity using linear accel.
+   --    6. Integrates altitude using updated velocity.
+   --    7. Updates the environment with the new velocity.
+   --  Parameters:
+   --    S            : in out Aircraft_State
+   --                   Current aircraft state, updated in place.
+   --    A            : in Dynamics.Acceleration
+   --                   Contains angular acceleration (Q_Dot)
+   --                   and vertical acceleration (Az).
+   --    Time_Step_ms : in Natural
+   --                   Integration time step in milliseconds.
+   ---------------------------------------------------------
    procedure Integrate (S: in out Aircraft_State; A : Dynamics.Acceleration; Time_Step_ms : Natural) is
+      S_Local   : Aircraft_State;
+      DT : constant Float   := Float (Time_Step_ms) * Utils.Ms_To_Sec; --  [s]
+   begin
+      ---------------------------------------------------------
+      -- 1. Integrate angular motion
+      ---------------------------------------------------------
+      -- pitch rate
+      S.Pitch_Rate := S.Pitch_Rate + A.Q_Dot * DT;
+      -- pitch angle
+      S.Pitch_Angle := S.Pitch_Angle + S.Pitch_Rate * DT;
 
-         S_Local   : Aircraft_State;
- --        Rho       : Float;                  -- air density
---         G         : constant Float := 9.81; -- gravity [m/s²]
+      ---------------------------------------------
+      -- Clamp pitch angle (safety)
+      ---------------------------------------------
+      S.Pitch_Angle := Utils.Clamp (S.Pitch_Angle, -20.0, 20.0);
 
-         -- New pitch model constants
---         K_Elevator   : constant Float := 20.0; -- elevator effectiveness (Cm_delta_e)
---         D_Pitch      : constant Float := 5.0;  -- pitch damping (Cmq)
---         K_Lift_Pitch : constant Float := 0.02; -- lift from pitch (CL_alpha)
---         K_Vel_Damp   : constant Float := 0.07;
+      ---------------------------------------------------------
+      -- 2. Integrate linear vertical motion
+      ---------------------------------------------------------
 
-         DT : constant Float   := Float (Time_Step_ms) * Utils.Ms_To_Sec; --  [s]
-      begin
-         ---------------------------------------------------------
-         -- Read current state
-         ---------------------------------------------------------
- --        S_Local  := Aircraft.Aircraft.Get_State;
-
-         -- Get environment data
- --        Rho := Environment.Env.Rho;
-
-         ---------------------------------------------------------
-         -- Internal computation block
-         ---------------------------------------------------------
-         declare
-            -- Aircraft parameters
---            T_Max : constant Float := Aircraft.T_Max;
---            Mass  : constant Float := Aircraft.Mass;
---            Cd    : constant Float := Aircraft.Cd;
---            Sref  : constant Float := Aircraft.Sref;
-
-            -- Forces
---            Thrust : Float;
---            Drag   : Float;
-
-            -- Pitch dynamics
---            Pitch_Accel : Float;
-
-            -- Vertical acceleration
- --           A : Float;
-         begin
-            ---------------------------------------------
-            -- Forces
-            ---------------------------------------------
-            --  Thrust := S_Local.Throttle * T_Max;
-            --
-            --  Drag :=
-            --    0.5 * Rho *
-            --    S_Local.Velocity * S_Local.Velocity *
-            --    Cd * Sref;
-            --
-            --  ---------------------------------------------
-            --  -- Pitch dynamics
-            --  ---------------------------------------------
-            --  Pitch_Accel :=
-            --    K_Elevator * S_Local.Elevator
-            --    - D_Pitch * S_Local.Pitch_Rate;
-
-         -- Integrate pitch rate
-         S_Local := S;
-            S_Local.Pitch_Rate :=
-              S_Local.Pitch_Rate + A.Q_Dot * DT;
-
-            -- Integrate pitch angle
-            S_Local.Pitch_Angle :=
-              S_Local.Pitch_Angle + S_Local.Pitch_Rate * DT;
-
-            ---------------------------------------------
-            -- Clamp pitch angle (safety)
-            ---------------------------------------------
-            S_Local.Pitch_Angle := Utils.Clamp (S_Local.Pitch_Angle, -20.0, 20.0);
-
-            ---------------------------------------------
-            -- Vertical dynamics (pitch influences climb)
-            ---------------------------------------------
-            --  A :=
-            --    (Thrust - Drag) / Mass
-            --    + K_Lift_Pitch * S_Local.Pitch_Angle
-            --    - G - K_Vel_Damp * S_Local.Velocity;
-
-            ---------------------------------------------
-            -- Integrate motion
-            ---------------------------------------------
-            S_Local.Velocity :=
-              S_Local.Velocity + A.Az * DT;
-
-            S_Local.Position :=
-           S_Local.Position + S_Local.Velocity * DT;
-
-         end;
-
-         ---------------------------------------------------------
-         -- Write updated state
-         ---------------------------------------------------------
-        -- Aircraft.Aircraft.Set_State (S_Local);
-         S := S_Local;
-         ---------------------------------------------------------
-         -- Update environment
-         ---------------------------------------------------------
-         Environment.Env.Set_Speed (S_Local.Velocity);
-
-         ---------------------------------------------------------
-         -- Stop condition
-         ---------------------------------------------------------
---         if Run_Time >= Simulation_Run_Time then
---            Stop_Flag := True;
---         end if;
+      -- vertical velocity
+      S.Velocity := S.Velocity + A.Az * DT;
+      -- vertical position (altitude)
+      S.Position := S.Position + S.Velocity * DT;
+      ---------------------------------------------------------
+      -- Update environment
+      ---------------------------------------------------------
+      Environment.Env.Set_Speed (S.Velocity);
 
       end Integrate;
---   end Aircraft;
 
 end Integration;
