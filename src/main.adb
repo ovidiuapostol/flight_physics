@@ -8,7 +8,7 @@
 --    runs autonomously using its internal periodic scheduling
 --    (delay until pattern).
 --    Main does not contain a control loop. The entire simulation
---    is driven by periodic tasks that execute independently:
+--    is driven by periodic task that execute independently:
 --      - environment update
 --      - aerodynamics and dynamics computation
 --      - control (PID)

@@ -51,27 +51,21 @@ package body Dynamics is
     --     This represents the simplified longitudinal dynamics
     --     model used by the simulation.
     ---------------------------------------------------------
-   function Compute_Accelerations (S : Aircraft.Aircraft_State; F : Aerodynamics.Aero_Forces) return Acceleration is
+   function Compute_Accelerations (S : Aircraft.Aircraft_State; 
+                                   F : Aerodynamics.Aero_Forces) return Acceleration is
       A : Acceleration;
       --  Aircraft Parameters
-      T_Max : constant Float := Aircraft.T_Max;
       Mass  : constant Float := Aircraft.Mass;
       
-      --  Forces
-      Thrust : Float;
-   begin
-      
-      -- Thrust
-      Thrust := S.Throttle * T_Max;
-      
+   begin    
       -- Pitch Acceleration
       A.Q_Dot := K_Elevator * S.Elevator - D_Pitch * S.Pitch_Rate;
       
       --  vertical acceleration
-      A.Az := (Thrust - F.Drag)/Mass + F.Lift_Pitch + F.Vel_Damping - G;
+      A.Az := F.Fz/Mass - G;
+      A.Ax := F.Fx/Mass;
       
       return A;
    end Compute_Accelerations;
    
-
 end Dynamics;

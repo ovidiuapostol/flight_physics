@@ -40,6 +40,7 @@ package Dynamics is
    type Acceleration is record
       Q_Dot : Float;  --  Pitch acceleration [deg/s/s]
       Az    : Float;  --  vertical acceleration [m/s/s]
+      Ax    : Float;  --  horizontal acceleration [m/s/s]
    end record;
    ---------------------------------------------------------
    --  Compute_Accelerations

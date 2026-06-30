@@ -7,7 +7,7 @@
 --  Author : Ovi
 ------------------------------------------------------------
 with Ada.Text_IO; use Ada.Text_IO;
---with Integration;
+with Utils;
 with Aircraft;
 
 package body Logger is
@@ -37,10 +37,11 @@ package body Logger is
       S_Local : constant Aircraft.Aircraft_State := Aircraft.Aircraft.Get_State;
    begin
       Ada.Text_IO.Put_Line
-        (File, Float'Image (S_Local.Position) & ","
-         & Float'Image (S_Local.Velocity) & "," & Float'Image (S_Local.Throttle) & ","
+        (File, Float'Image (S_Local.Position_Z) & "," & Float'Image (S_Local.Velocity_X)
+         & Float'Image (S_Local.Velocity_Z) & "," & Float'Image (S_Local.Throttle) & ","
          & Float'Image (S_Local.Pitch_Angle) & "," & Float'Image (S_Local.Pitch_Rate) & ","
-         & Float'Image (S_Local.Desired_Pitch) & "," & Float'Image (S_Local.Elevator)
+         & Float'Image (S_Local.Desired_Pitch) & "," & Float'Image (S_Local.Elevator) & ","
+             & Utils.Phase_To_String (S_Local.Phase)
         );
    end Log_Data;
 
@@ -52,7 +53,7 @@ begin
    Ada.Text_IO.Create (File, Ada.Text_IO.Out_File, "log.csv");
 
    --  Write CSV header
-   Ada.Text_IO.Put_Line (File, "Position,Velocity,Throttle, Pitch_Angle,Pitch_Rate,Desired_Pitch,Elevator");
+   Ada.Text_IO.Put_Line (File, "Position,Velocity_X,Velocity_Z,Throttle, Pitch_Angle,Pitch_Rate,Desired_Pitch,Elevator,Phase");
 
 exception
    ---------------------------------------------------------

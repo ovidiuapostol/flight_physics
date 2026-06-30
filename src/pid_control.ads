@@ -2,7 +2,7 @@
 --  pid_control.ads
 --  Package: PID_Control
 --  Purpose:
---    Provides the multiloop PID/PD control logic for the
+--    Provides the multiloop PID/PD phase dependent control logic for the
 --    vertical flight channel of the aircraft simulation.
 --    The controller operates in a cascaded structure:
 --      * Outer loop  : Altitude => Desired Pitch (P-control)
@@ -12,6 +12,10 @@
 --    The PID_Step procedure performs one complete control
 --    iteration using the current aircraft state and the
 --    configured cycle period.
+--  Flight Phases:
+--    - GROUND_ROLL: aircraft accelerates on the runway
+--    - ROTATION   : aircraft pitches up for liftof
+--    - CLIMB      :altitude and energy control active
 --  Role in Architecture:
 --    - Reads the current Aircraft_State (altitude, pitch,
 --      pitch rate, velocity).

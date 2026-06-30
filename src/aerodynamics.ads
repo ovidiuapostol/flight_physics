@@ -4,27 +4,39 @@
 --  Package: Aerodynamics
 --
 --  Purpose:
---     Computes all aerodynamic forces acting on the aircraft.
---     This module is responsible ONLY for aerodynamic effects:
+--     Provides the aerodynamic force model used by the
+--     aerodynamic forces based on the current aircraft state
+--     and atmospheric conditions. No accelerations or motion
+--     integration are performed here.
 --
+--     The aerodynamic model includes:
 --
---  Aero_Forces
---   Output of the aerodynamic model.
---   These forces are passed to Dynamics.
---     
---       - Drag (simplified Cd * q * Sref model)
---       - Lift contribution from pitch angle (CL_alpha aproximation)
---       - Velocity dependent aeorodynamic damping
+--        * Drag
+--           Simplified Cd * q * Sref formulation.
+--           Direction opposite to velocity.
 --
---     It does NOT compute accelerations or integrate motion.
---     It simply returns aerodynamic forces, which are then
---     consumed by the Dynamics module.
+--        * Lift
+--           Based on angle of attack using:
+--             CL = CL_0 + CL_Alpha * Alpha
+--           Direction perpendicular to velocity.
+--
+--        * Velocity damping
+--           Linear aerodynamic damping proportional to speed
+--           and opposite to the velocity direction.
+--
+--        * Thrust resolution
+--           Thrust is resolved into Fx and Fz using the
+--           aircraft pitch angle.
+--
+--     The resulting forces (Fx, Fz) are passed to the
+--     Dynamics module, which computes accelerations and
+--     integrates the aircraft state.
 --
 --  Notes:
---     - Uses simplified linear aerodynamic models.
---     - Constants K_Lift_Pitch and K_Vel_Damp are model parameters.
---     - Produces identical results to the previous monolithic
---       integrator, but now cleanly separated.
+--     - Uses simplified linear aerodynamic coefficients.
+--     - K_Vel_Damp controls the strength of velocity damping.
+--     - This module is intentionally lightweight and does not
+--       modell stall, CLmax, induced drag or full 3D aerodynamics
 --
 --  Author : Ovi
 ------------------------------------------------------------
@@ -37,23 +49,26 @@ package Aerodynamics is
    ---------------------------------------------------------
    
    type Aero_Forces is record
-      Drag        : Float;   -- aerodynamic drag force [N]
-      Lift_Pitch  : Float;   -- lift contribution from pitch angle [N]
-      Vel_Damping : Float;   -- aerodynamic velocity damping [N]
+      Fx          : Float;   -- horizontal force
+      Fz          : Float;   -- vertical force (total)
    end record;
    
-   K_Lift_Pitch : constant Float := 0.02; -- lift from pitch (CL_alpha)
-   K_Vel_Damp   : constant Float := 0.07; -- velocity damping term
+   ---------------------------------------------------------
+   --  Model Parameters
+   --  K_Vel_Damp :
+   --     Linear aerodynamic damping coefficient. Produces a
+   --     stabilizing force proportional to speed and opposite
+   --     to the velocity direction.
+   ---------------------------------------------------------   
+   
+   K_Vel_Damp   : constant Float := 0.07; 
    ---------------------------------------------------------
    --  Compute_Forces
-   --
    --  Input:
    --     S : Aircraft_State
-   --
    --  Output:
    --     Aero_Forces record containing Drag, Lift_Pitch,
    --     and Vel_Damping.
-   --
    --  Description:
    --     Computes aerodynamic forces based on the current
    --     aircraft state and environment.

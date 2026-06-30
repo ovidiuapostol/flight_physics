@@ -19,7 +19,7 @@ with Logger;
 with Display;
 package Simulation_Loop is
    --  Total number of simuation cycles
-   Simulation_Cycles_Finish : constant Natural := 3000;
+   Simulation_Cycles_Finish : constant Natural := 605;
    Simulation_Cycles_Current : Natural := 0;
    
    task type Simulation_Loop (Period : Natural);

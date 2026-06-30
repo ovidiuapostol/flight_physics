@@ -15,21 +15,26 @@ package Aircraft is
    T_Max : constant Float := Mass * 20.0;     --  maximum motor thrust [N]
    Cd    : constant Float := 0.035;           --  drag coeficient
    Sref  : constant Float := 16.0;            --  wing area [m^2]
+   Vr    : constant Float := 31.0;            -- at this speed, lift ~ weight
+   
+   type Flight_Phase is (Ground_Roll, Rotation, Climb);
    ---------------------------------------------------------
    --  Aircraft_State
    --   Represents the current state of the aircraft
    ---------------------------------------------------------
    type Aircraft_State is record
-      Position    : Float := 0.0;           --  altitude [m]
-      Velocity    : Float := 0.0;           --  vertical speed [m/s]
+      Position_Z  : Float := 0.0;           --  altitude [m]
+      Position_X  : Float := 0.0;           --  forward distance
+      Velocity_Z  : Float := 0.0;           --  vertical speed [m/s]
+      Velocity_X  : Float := 0.0;           --  forward speed [m/s]
       Throttle    : Float := 0.0;           --  engine control [0..1]
    
       Pitch_Angle : Float := 0.0;        --  deg
       Pitch_Rate  : Float := 0.0;        --  deg/s
       Elevator    : Float := 0.0;        --  command [-1 .. 1]
+      Phase       : Flight_Phase := Ground_Roll;
    
-      --  kept in AIrcraft_State for display and tunning effectivness only
-      Desired_Pitch : Float := 0.0;       --  command from outer loop
+      Desired_Pitch : Float := 0.0;       --  command from outer control loop
    end record;
    ---------------------------------------------------------
    --  Aircraft (Protected Object)

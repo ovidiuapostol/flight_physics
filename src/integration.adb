@@ -34,8 +34,8 @@ package body Integration is
    --    2. Integrates pitch rate using angular acceleration.
    --    3. Integrates pitch angle using the updated pitch rate.
    --    4. Clamps pitch angle to a safe range.
-   --    5. Integrates vertical velocity using linear accel.
-   --    6. Integrates altitude using updated velocity.
+   --    5. Integrates velocity using linear accel.
+   --    6. Integrates position using updated velocity.
    --    7. Updates the environment with the new velocity.
    --  Parameters:
    --    S            : in out Aircraft_State
@@ -61,20 +61,24 @@ package body Integration is
       ---------------------------------------------
       -- Clamp pitch angle (safety)
       ---------------------------------------------
-      S.Pitch_Angle := Utils.Clamp (S.Pitch_Angle, -20.0, 20.0);
+      S.Pitch_Angle := Utils.Clamp (S.Pitch_Angle, -5.0, 15.0);
 
       ---------------------------------------------------------
-      -- 2. Integrate linear vertical motion
+      -- 2. Integrate linear motion
       ---------------------------------------------------------
 
       -- vertical velocity
-      S.Velocity := S.Velocity + A.Az * DT;
+      S.Velocity_Z := S.Velocity_Z + A.Az * DT;
       -- vertical position (altitude)
-      S.Position := S.Position + S.Velocity * DT;
+      S.Position_Z := S.Position_Z + S.Velocity_Z * DT;
+      -- horizontal velocity
+      S.Velocity_X := S.Velocity_X + A.Ax * DT;
+      -- horizontal position
+      S.Position_X := S.Position_X + S.Velocity_X * DT;
       ---------------------------------------------------------
       -- Update environment
       ---------------------------------------------------------
-      Environment.Env.Set_Speed (S.Velocity);
+     -- Environment.Env.Set_Speed (S.Velocity);
 
       end Integrate;
 
